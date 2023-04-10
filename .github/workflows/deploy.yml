@@ -1,6 +1,6 @@
 # Simple workflow for deploying static content to GitHub Pages
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Deploy static content to Pages
+name: Deploy static content to GitHub Pages and Azure
 
 on:
   # Runs on pushes targeting the default branch
@@ -22,8 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
+  deploy-pages:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -37,7 +36,21 @@ jobs:
         uses: actions/upload-pages-artifact@v1
         with:
           # Upload the source folder
-          path: './src'
+          path: "./src"
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v1
+
+  deploy-dev:
+    needs: deploy-pages
+    environment: dev
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Static Web Apps Deploy
+        uses: Azure/static-web-apps-deploy@v1
+        with:
+          azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          action: "upload"
+          # The location of the app build output
+          app_location: "src"
